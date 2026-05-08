@@ -238,6 +238,7 @@
             outline: none;
             display: block;
             white-space: nowrap;
+            flex: 0 0 auto;
             overflow: hidden;
             text-overflow: ellipsis;
             border-bottom: 1.5px solid transparent;
@@ -262,6 +263,7 @@
             padding: 5px 11px;
             border-radius: 20px;
             white-space: nowrap;
+            flex: 0 0 auto;
             flex-shrink: 0;
             letter-spacing: .2px
         }
@@ -300,6 +302,7 @@
         .garage-row .btn {
             width: auto;
             white-space: nowrap;
+            flex: 0 0 auto;
             padding: 10px 13px
         }
 
@@ -519,6 +522,7 @@
             padding: 3px 9px;
             border-radius: 20px;
             white-space: nowrap;
+            flex: 0 0 auto;
             letter-spacing: .2px
         }
 
@@ -754,6 +758,7 @@
             cursor: pointer;
             transition: all 150ms ease;
             white-space: nowrap;
+            flex: 0 0 auto;
             color: var(--muted)
         }
 
@@ -1061,10 +1066,10 @@
         /* FILTER CHIPS */
         .filter-chips {
             display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding: 4px 0 12px;
-            -webkit-overflow-scrolling: touch
+            flex-wrap: wrap;
+            gap: 8px;
+            overflow: visible;
+            padding: 4px 0 12px
         }
 
         .filter-chips::-webkit-scrollbar {
@@ -1077,6 +1082,7 @@
             font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
+            flex: 0 0 auto;
             background: var(--surface);
             border: 1px solid var(--border);
             cursor: pointer;
@@ -1519,6 +1525,7 @@
             transition: opacity .2s ease;
             z-index: 250;
             white-space: nowrap;
+            flex: 0 0 auto;
             box-shadow: 0 4px 16px rgba(0, 0, 0, .2)
         }
 
@@ -1582,6 +1589,8 @@
     <div id="modal"></div>
     <input type="file" id="photo-input" accept="image/*" hidden>
     <input type="file" id="import-input" accept=".json" hidden>
+    <input type="file" id="excel-input" accept=".xlsx,.xls" hidden>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
 
         const KEY = 'moto_pro';
@@ -1596,8 +1605,8 @@
             aceite: [{ label: 'Aceite', value: '' }, { label: 'Filtro', value: '' }],
             cadena: [{ label: 'Cadena', value: '' }, { label: 'Lubricante', value: '' }],
             filtro: [{ label: 'Filtro de aire', value: '' }],
-            bujia: [{ label: 'Bujia', value: '' }],
-            frenos: [{ label: 'Liquido de frenos', value: '' }, { label: 'Pastillas', value: '' }]
+            bujia: [{ label: 'Bujía', value: '' }],
+            frenos: [{ label: 'Líquido de frenos', value: '' }, { label: 'Pastillas', value: '' }]
         };
         const CATS = ['Mantenimiento', 'Viaje', 'Incidente', 'Modificación', 'Otro'];
         const ACTIONS = ['Revisar', 'Limpiar', 'Ajustar', 'Lubricar', 'Reemplazar'];
@@ -1605,16 +1614,19 @@
         const MESES_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         const BANNER_DEF = 'Presión delantera: 28 psi\nPresión trasera: 32 psi\nAceite: 10W-40\nCadena: limpiar cada 500 km\nFiltro: revisar cada 8000 km';
 
-        let G, D, activeTab = 'resumen', expandedCards = {}, expandedParts = {}, openDropdown = null, editingBanner = false, editingMaint = null, editingFuel = null, newPartOpen = false, newPartDraft = null, editingPartCategory = null;
+        let G, D, activeTab = 'resumen', expandedCards = {}, expandedParts = {}, openDropdown = null, editingBanner = false, editingMaint = null, editingFuel = null, newPartOpen = false, newPartDraft = null, editingPartCategory = null, pendingPhotoVehicleId = null;
         const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
 
-        function defaultVehicle(name = 'Mi Moto') {
-            return { id: 'veh_' + uid(), km: 0, name, photo: null, banner: BANNER_DEF, fuelLog: [], records: {}, custom: [], log: [], parts: [], partCategories: [], deletedPartCategories: [] };
+        function defaultVehicle(name = 'Mi Moto', brand = '', model = '', year = '') {
+            return { id: 'veh_' + uid(), km: 0, name, brand, model, year, photo: null, banner: BANNER_DEF, fuelLog: [], records: {}, custom: [], log: [], parts: [], partCategories: [], deletedPartCategories: [], deletedDefaultItems: [] };
         }
         function normalizeVehicleData(v) {
             if (!v || typeof v !== 'object') v = defaultVehicle();
             if (!v.id) v.id = 'veh_' + uid();
             if (!v.name) v.name = 'Mi Moto';
+            if (v.brand === undefined) v.brand = '';
+            if (v.model === undefined) v.model = '';
+            if (v.year === undefined) v.year = '';
             if (v.km === undefined) v.km = 0;
             if (!v.records) v.records = {};
             if (!v.fuelLog) v.fuelLog = [];
@@ -1623,6 +1635,7 @@
             if (!v.parts) v.parts = [];
             if (!v.partCategories) v.partCategories = [];
             if (!v.deletedPartCategories) v.deletedPartCategories = [];
+            if (!v.deletedDefaultItems) v.deletedDefaultItems = [];
             if (!v.banner && v.banner !== '') v.banner = BANNER_DEF;
             v.parts = v.parts.map(p => {
                 const part = ensurePartShape(p, p.itemId || null);
@@ -1647,6 +1660,9 @@
             return { version: 2, currentVehicleId: first.id, vehicles: [first] };
         }
         function currentVehicle() { return G.vehicles.find(v => v.id === G.currentVehicleId) || G.vehicles[0]; }
+        function vehicleLabel(v) {
+            return normCell(v?.name) || 'Mi Moto';
+        }
         function resetViewStateForVehicle() {
             expandedCards = {}; expandedParts = {}; openDropdown = null; editingBanner = false; editingMaint = null; editingFuel = null; newPartOpen = false; newPartDraft = null; editingPartCategory = null;
         }
@@ -1665,7 +1681,10 @@
             localStorage.setItem(KEY, JSON.stringify(G));
         }
 
-        function allItems() { return DEFAULTS.concat(D.custom || []); }
+        function allItems() {
+            const hiddenDefaults = D.deletedDefaultItems || [];
+            return DEFAULTS.filter(i => !hiddenDefaults.includes(i.id)).concat(D.custom || []);
+        }
         function allPartCategories() {
             const hidden = D.deletedPartCategories || [];
             const customNames = D.partCategories || [];
@@ -1774,6 +1793,28 @@
         function daysSince(dateStr) { if (!dateStr) return null; const d = new Date(dateStr + 'T12:00:00'); return Math.floor((Date.now() - d.getTime()) / (86400000)); }
 
         function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); if (navigator.vibrate) navigator.vibrate(8); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500); }
+        function resizePhotoFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = reject;
+                reader.onload = ev => {
+                    const img = new Image();
+                    img.onerror = reject;
+                    img.onload = () => {
+                        const maxSize = 900;
+                        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(img.width * scale));
+                        canvas.height = Math.max(1, Math.round(img.height * scale));
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.82));
+                    };
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
         const ICO = {
             home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
@@ -1818,16 +1859,17 @@
             $('#hdr').innerHTML = `
 <div class="photo" id="photo-circle" title="Tocar para cambiar foto">${photoHtml}</div>
 <div class="info">
-<div class="moto-name" contenteditable="true" spellcheck="false" id="moto-name">${D.name || 'Mi Moto'}</div>
+<div class="moto-name" contenteditable="true" spellcheck="false" id="moto-name">${esc(D.name || 'Mi Moto')}</div>
+${[D.brand, D.model, D.year].filter(Boolean).length ? `<div class="subtitle">${esc([D.brand, D.model, D.year].filter(Boolean).join(' '))}</div>` : ''}
 <div class="subtitle"><span class="mono">${sub}</span></div>
 </div>
 <div class="status-chip ${dueCount ? 'due' : 'ok'}">${dueCount ? dueCount + ' vencido' + (dueCount > 1 ? 's' : '') : 'Todo al día'}</div>`;
         }
 
         function renderGarageSelector() {
-            const options = (G?.vehicles || [D]).map(v => `<option value="${esc(v.id)}"${v.id === D.id ? ' selected' : ''}>${esc(v.name || 'Mi Moto')}</option>`).join('');
+            const options = (G?.vehicles || [D]).map(v => `<option value="${esc(v.id)}"${v.id === D.id ? ' selected' : ''}>${esc(vehicleLabel(v))}</option>`).join('');
             $('#garage-row')?.remove();
-            $('#hdr').insertAdjacentHTML('afterend', `<div class="garage-row" id="garage-row"><select class="garage-select" id="vehicle-select">${options}</select><button class="btn btn-ghost btn-sm" id="vehicle-new-btn">${ICO.plus} Vehiculo</button><button class="btn btn-ghost btn-sm" id="vehicle-del-btn">${ICO.trash}</button></div>`);
+            $('#hdr').insertAdjacentHTML('afterend', `<div class="garage-row" id="garage-row"><select class="garage-select" id="vehicle-select">${options}</select><button class="btn btn-ghost btn-sm" id="vehicle-new-btn">${ICO.plus} Vehículo</button><button class="btn btn-ghost btn-sm" id="vehicle-del-btn">${ICO.trash}</button></div>`);
         }
 
         function renderBanner() {
@@ -1916,7 +1958,7 @@
 
         function renderMantenimiento() {
             const el = $('#tab-mantenimiento'); const items = allItems();
-            let html = '';
+            let html = `<div class="parts-toolbar"><div class="section-title">Mantenimiento</div><button class="btn btn-danger btn-sm" id="maint-clear-btn">${ICO.trash} Borrar mantenimiento</button></div>`;
             items.forEach(item => {
                 const s = getStatus(item); const r = getRemaining(item); const isOpen = expandedCards[item.id];
                 const h = getHistory(item); const last = h.length ? h[h.length - 1] : null;
@@ -2011,7 +2053,7 @@ ${fields.map((f, i) => `<div class="part-extra-row">
 
         function renderRepuestos() {
             const el = $('#tab-repuestos');
-            let html = `<div class="parts-toolbar"><div class="section-title">Categorias de repuestos</div><button class="btn btn-ghost btn-sm" id="part-new-btn">${ICO.plus} Nueva</button></div>`;
+            let html = `<div class="parts-toolbar"><div class="section-title">Categorías de repuestos</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="part-new-btn">${ICO.plus} Nueva</button><button class="btn btn-danger btn-sm" id="parts-clear-btn">${ICO.trash} Borrar repuestos</button></div></div>`;
             if (newPartOpen) {
                 html += `<div class="card part-card" id="part-new-card">
 <div class="part-title" style="margin-bottom:10px">Nueva categoria</div>
@@ -2092,7 +2134,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
 
         function renderBitacora() {
             const el = $('#tab-bitacora');
-            let html = `<button class="btn btn-primary" id="log-new-btn" style="margin-bottom:12px">${ICO.plus} Nuevo evento</button>`;
+            let html = `<div class="parts-toolbar"><div class="section-title">Bitácora</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="log-new-btn">${ICO.plus} Nuevo evento</button><button class="btn btn-danger btn-sm" id="log-clear-btn">${ICO.trash} Borrar bitácora</button></div></div>`;
             html += '<div id="log-form-wrap"></div>';
             html += `<div class="filter-chips"><div class="filter-chip${bitacoraFilter === '' ? ' active' : ''}" data-filter="">Todos</div>${CATS.map(c => `<div class="filter-chip${bitacoraFilter === c ? ' active' : ''}" data-filter="${c}">${c}</div>`).join('')}</div>`;
             html += `<div class="search-wrap">${ICO.search}<input type="text" placeholder="Buscar..." id="log-search" value="${bitacoraSearch}"></div>`;
@@ -2124,10 +2166,11 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
 </div>
 <div class="section-title">Datos</div>
 <div class="action-grid">
-<div class="action-btn" id="export-json">${ICO.download}<div class="ab-label">Exportar JSON</div></div>
-<div class="action-btn" id="import-json">${ICO.upload}<div class="ab-label">Importar JSON</div></div>
-<div class="action-btn" id="export-csv">${ICO.download}<div class="ab-label">Exportar CSV</div></div>
-<div class="action-btn danger" id="delete-all">${ICO.trash}<div class="ab-label" style="color:var(--due)">Borrar todo</div></div>
+<div class="action-btn" id="export-json">${ICO.download}<div class="ab-label">Guardar respaldo completo</div></div>
+<div class="action-btn" id="import-json">${ICO.upload}<div class="ab-label">Restaurar respaldo completo</div></div>
+<div class="action-btn" id="import-excel">${ICO.upload}<div class="ab-label">Actualizar datos desde Excel</div></div>
+<div class="action-btn" id="export-csv">${ICO.download}<div class="ab-label">Exportar mantenimiento CSV</div></div>
+<div class="action-btn danger" id="delete-all">${ICO.trash}<div class="ab-label" style="color:var(--due)">Borrar toda la app</div></div>
 </div>
 <div id="delete-confirm-wrap"></div>`;
         }
@@ -2238,33 +2281,62 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (openDropdown && !t.closest('[data-log-menu]') && !t.closest('.dropdown')) { openDropdown = null; renderBitacora(); return; }
             // Nav
             const nav = t.closest('.nav-item'); if (nav) { switchTab(nav.dataset.tab); return; }
-            // Multi vehiculo
+            // Section deletes
+            if (t.id === 'maint-clear-btn' || t.closest('#maint-clear-btn')) {
+                if (!confirm('¿Borrar todos los registros de mantenimiento de este vehículo?')) return;
+                D.records = {};
+                save(); toast('Mantenimiento borrado'); renderAll(); return;
+            }
+            if (t.id === 'parts-clear-btn' || t.closest('#parts-clear-btn')) {
+                if (!confirm('¿Borrar todos los repuestos y categorías de repuestos de este vehículo?')) return;
+                D.parts = [];
+                D.partCategories = [];
+                D.deletedPartCategories = DEFAULTS.map(i => i.id);
+                newPartOpen = false; newPartDraft = null; editingPartCategory = null; expandedParts = {};
+                save(); toast('Repuestos borrados'); renderAll(); return;
+            }
+            if (t.id === 'log-clear-btn' || t.closest('#log-clear-btn')) {
+                if (!confirm('¿Borrar toda la bitácora de este vehículo?')) return;
+                D.log = [];
+                bitacoraFilter = ''; bitacoraSearch = ''; openDropdown = null;
+                save(); toast('Bitácora borrada'); renderAll(); return;
+            }
+            // Multi vehículo
             if (t.id === 'vehicle-new-btn' || t.closest('#vehicle-new-btn')) {
-                const name = prompt('Nombre del vehiculo');
-                if (!name || !name.trim()) return;
+                const customName = prompt('Nombre del vehiculo');
+                if (customName === null) return;
+                const brand = prompt('Marca del vehículo');
+                if (brand === null) return;
+                const model = prompt('Modelo del vehículo');
+                if (model === null) return;
+                const yearRaw = prompt('Año del vehículo');
+                if (yearRaw === null) return;
+                if (!customName.trim() && !brand.trim() && !model.trim() && !yearRaw.trim()) return;
+                const year = yearRaw.trim();
+                const name = customName.trim() || 'Mi Moto';
                 save();
-                const vehicle = defaultVehicle(name.trim());
+                const vehicle = defaultVehicle(name, brand.trim(), model.trim(), year);
                 G.vehicles.push(vehicle);
                 G.currentVehicleId = vehicle.id;
                 D = vehicle;
                 resetViewStateForVehicle();
-                save(); toast('Vehiculo agregado'); renderAll(); return;
+                save(); toast('Vehículo agregado'); renderAll(); return;
             }
             if (t.id === 'vehicle-del-btn' || t.closest('#vehicle-del-btn')) {
-                if ((G.vehicles || []).length <= 1) { toast('Debe quedar al menos un vehiculo'); return; }
-                const ok = confirm('Eliminar este vehiculo y todos sus datos?');
+                if ((G.vehicles || []).length <= 1) { toast('Debe quedar al menos un vehículo'); return; }
+                const ok = confirm('Eliminar este vehículo y todos sus datos?');
                 if (!ok) return;
                 const oldId = D.id;
                 G.vehicles = G.vehicles.filter(v => v.id !== oldId);
                 G.currentVehicleId = G.vehicles[0].id;
                 D = currentVehicle();
                 resetViewStateForVehicle();
-                save(); toast('Vehiculo eliminado'); renderAll(); return;
+                save(); toast('Vehículo eliminado'); renderAll(); return;
             }
             // Banner edit
             if (t.id === 'banner-edit-btn') { editingBanner = true; renderBanner(); return; }
             // Photo
-            if (t.closest('#photo-circle') && !photoTimer) { $('#photo-input').click(); return; }
+            if (t.closest('#photo-circle') && !photoTimer) { pendingPhotoVehicleId = D.id; $('#photo-input').click(); return; }
             // KM display click
             const kmD = t.closest('#km-display');
             if (kmD && !kmD.querySelector('input')) {
@@ -2288,7 +2360,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 const cat = { id: 'pc_' + uid(), name };
                 D.partCategories.push(cat);
                 newPartOpen = false; expandedParts[cat.id] = true;
-                save(); toast('Categoria agregada'); renderRepuestos(); return;
+                save(); toast('Categoría agregada'); renderRepuestos(); return;
             }
             const partToggle = t.closest('[data-rp-toggle]');
             if (partToggle) { const id = partToggle.dataset.rpToggle; expandedParts[id] = !expandedParts[id]; renderRepuestos(); return; }
@@ -2312,7 +2384,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                         else D.partCategories.find(c => c.id === itemId).name = name;
                     }
                 }
-                editingPartCategory = null; save(); toast('Categoria actualizada'); renderRepuestos(); return;
+                editingPartCategory = null; save(); toast('Categoría actualizada'); renderRepuestos(); return;
             }
             const delCategory = t.closest('[data-rp-del-category]');
             if (delCategory) {
@@ -2321,7 +2393,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 D.partCategories = (D.partCategories || []).filter(c => c.id !== itemId);
                 if (!D.deletedPartCategories.includes(itemId)) D.deletedPartCategories.push(itemId);
                 delete expandedParts[itemId];
-                save(); toast('Categoria eliminada'); renderRepuestos(); return;
+                save(); toast('Categoría eliminada'); renderRepuestos(); return;
             }
             const addPart = t.closest('[data-rp-add-part]');
             if (addPart) {
@@ -2557,7 +2629,9 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'garage_backup.json'; a.click(); toast('Garaje exportado'); return;
             }
             // Import JSON
-            if (t.id === 'import-json' || t.closest('#import-json')) { $('#import-input').click(); return; }
+            if (t.id === 'import-json' || t.closest('#import-json')) { document.getElementById('import-input').click(); return; }
+            // Import Excel
+            if (t.id === 'import-excel' || t.closest('#import-excel')) { document.getElementById('excel-input').click(); return; }
             // Export CSV
             if (t.id === 'export-csv' || t.closest('#export-csv')) {
                 let csv = 'Ítem,Fecha,Km,Próximo Km,Acción,Repuestos,Mano de obra,Total,Notas\n';
@@ -2570,18 +2644,23 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             }
             // Delete all
             if (t.id === 'delete-all' || t.closest('#delete-all')) {
+                alert('Atención: este botón liquida toda la aplicación. Se eliminan todos los vehículos y todos sus datos.');
                 const wrap = $('#delete-confirm-wrap');
-                wrap.innerHTML = `<div class="inline-confirm" style="margin-top:12px"><span class="ic-text">¿Borrar los datos de este vehiculo? Los otros vehiculos no se tocan.</span><button class="btn btn-sm btn-danger" id="confirm-delete-all">Sí, borrar</button><button class="btn btn-sm btn-ghost" id="cancel-delete-all">Cancelar</button></div>`;
+                wrap.innerHTML = `<div class="inline-confirm" style="margin-top:12px"><span class="ic-text">¿Borrar absolutamente todo? Se eliminarán vehículos, mantenimiento, repuestos, bitácora y combustible.</span><button class="btn btn-sm btn-danger" id="confirm-delete-all">Sí, borrar todo</button><button class="btn btn-sm btn-ghost" id="cancel-delete-all">Cancelar</button></div>`;
                 return;
             }
             if (t.id === 'confirm-delete-all') {
-                const keepId = D.id;
-                const keepName = D.name || 'Mi Moto';
-                const fresh = defaultVehicle(keepName);
-                fresh.id = keepId;
+                const fresh = defaultVehicle('Mi Moto');
+                fresh.deletedDefaultItems = DEFAULTS.map(i => i.id);
+                fresh.deletedPartCategories = DEFAULTS.map(i => i.id);
+                fresh.banner = '';
+                G = { vehicles: [fresh], currentVehicleId: fresh.id };
                 D = fresh;
-                G.currentVehicleId = keepId;
-                save(); resetViewStateForVehicle(); toast('Datos del vehiculo borrados'); renderAll(); return;
+                localStorage.setItem(KEY, JSON.stringify(G));
+                resetViewStateForVehicle();
+                toast('Todo borrado');
+                renderAll();
+                return;
             }
             if (t.id === 'cancel-delete-all') { $('#delete-confirm-wrap').innerHTML = ''; return; }
         });
@@ -2595,7 +2674,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 G.currentVehicleId = id;
                 D = currentVehicle();
                 resetViewStateForVehicle();
-                save(); toast('Vehiculo cambiado'); renderAll();
+                save(); toast('Vehículo cambiado'); renderAll();
             }
         });
 
@@ -2661,13 +2740,156 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
         }, true);
 
         // Photo upload
-        $('#photo-input').addEventListener('change', e => {
+        $('#photo-input').addEventListener('change', async e => {
             const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => { D.photo = ev.target.result; save(); renderHeader(); setupPhotoLongPress(); toast('Foto actualizada'); };
-            reader.readAsDataURL(file); e.target.value = '';
+            const vehicleId = pendingPhotoVehicleId || D.id;
+            pendingPhotoVehicleId = null;
+            try {
+                const photo = await resizePhotoFile(file);
+                const vehicle = (G.vehicles || []).find(v => v.id === vehicleId);
+                if (!vehicle) return;
+                vehicle.photo = photo;
+                D = currentVehicle();
+                localStorage.setItem(KEY, JSON.stringify(G));
+                renderAll(); toast('Foto actualizada');
+            } catch (err) {
+                toast('No se pudo guardar la foto');
+            } finally {
+                e.target.value = '';
+            }
         });
 
+        function normCell(v) { return String(v ?? '').trim(); }
+        function numberCell(v) { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; }
+        function boolCell(v) { return ['si', 'sí', 's', 'true', '1', 'x', 'lleno'].includes(normCell(v).toLowerCase()); }
+        function excelDate(v) {
+            if (!v) return today();
+            if (v instanceof Date) return v.toISOString().slice(0, 10);
+            if (typeof v === 'number' && window.XLSX && XLSX.SSF) {
+                const d = XLSX.SSF.parse_date_code(v);
+                if (d) return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+            }
+            const s = normCell(v);
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+            return s || today();
+        }
+        function sheetNameFor(wb, name) { return wb.SheetNames.find(n => n.toLowerCase() === name.toLowerCase()); }
+        function sheetRows(wb, name) {
+            const sheetName = sheetNameFor(wb, name);
+            return sheetName ? XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' }) : [];
+        }
+        function findItemByName(name) {
+            const wanted = normCell(name).toLowerCase();
+            return allItems().find(i => i.name.toLowerCase() === wanted || i.id.toLowerCase() === wanted) || null;
+        }
+        function rowValue(r, names) {
+            const keys = Object.keys(r || {});
+            for (const name of names) {
+                if (r[name] !== undefined) return r[name];
+                const found = keys.find(k => normCell(k).toLowerCase() === normCell(name).toLowerCase());
+                if (found) return r[found];
+            }
+            return '';
+        }
+        function partCategoryName(r) {
+            return normCell(rowValue(r, ['Categoría', 'Categoria', 'Categoría de repuesto', 'Categoria de repuesto', 'Item', 'Ítem'])) || 'Repuestos adicionales';
+        }
+        function importKey(parts) {
+            return parts.map(v => normCell(v).toLowerCase()).join('|');
+        }
+        function upsertByKey(list, keyFn, key, data) {
+            const idx = list.findIndex(item => keyFn(item) === key);
+            if (idx >= 0) {
+                list[idx] = { ...list[idx], ...data };
+                return false;
+            }
+            list.push(data);
+            return true;
+        }
+        function importWorkbook(wb) {
+            const hasMaintSheet = !!sheetNameFor(wb, 'Mantenimiento');
+            const hasPartsSheet = !!sheetNameFor(wb, 'Repuestos');
+            const hasLogSheet = !!sheetNameFor(wb, 'Bitacora') || !!sheetNameFor(wb, 'Bitácora');
+            const hasFuelSheet = !!sheetNameFor(wb, 'Combustible');
+            const maint = sheetRows(wb, 'Mantenimiento');
+            const parts = sheetRows(wb, 'Repuestos');
+            const logs = sheetRows(wb, 'Bitacora').concat(sheetRows(wb, 'Bitácora'));
+            const fuel = sheetRows(wb, 'Combustible');
+            const maintRows = maint.filter(r => normCell(rowValue(r, ['Item', 'Ítem', 'ItemMantenimiento', 'Item mantenimiento', 'Ítem mantenimiento'])));
+            const partRows = parts.filter(r => normCell(rowValue(r, ['Nombre', 'Repuesto'])));
+            const logRows = logs.filter(r => normCell(rowValue(r, ['Descripción', 'Descripcion', 'Texto'])));
+            const fuelRows = fuel.filter(r => numberCell(rowValue(r, ['Litros'])) && numberCell(rowValue(r, ['PrecioLitro', 'Precio litro', 'Precio/litro'])) && parseInt(rowValue(r, ['Km', 'Kilómetros', 'Kilometros'])));
+            let count = 0;
+
+            maintRows.forEach(r => {
+                const itemName = normCell(rowValue(r, ['Item', 'Ítem', 'ItemMantenimiento', 'Item mantenimiento', 'Ítem mantenimiento']));
+                const defaultItem = DEFAULTS.find(i => i.name.toLowerCase() === itemName.toLowerCase() || i.id.toLowerCase() === itemName.toLowerCase());
+                let item = defaultItem || (D.custom || []).find(i => i.name.toLowerCase() === itemName.toLowerCase());
+                if (defaultItem) D.deletedDefaultItems = (D.deletedDefaultItems || []).filter(id => id !== defaultItem.id);
+                if (!item) { item = { id: uid(), name: itemName, interval: parseInt(rowValue(r, ['IntervaloKm', 'Intervalo km', 'Intervalo Km']) || 0) || 0 }; D.custom.push(item); }
+                if (!D.records[item.id]) D.records[item.id] = { history: [] };
+                D.records[item.id].history.push({ id: uid(), date: excelDate(rowValue(r, ['Fecha'])), km: parseInt(rowValue(r, ['Km', 'Kilómetros', 'Kilometros'])) || 0, nextKm: parseInt(rowValue(r, ['ProximoKm', 'PróximoKm', 'Proximo km', 'Próximo km', 'Próximo Km'])) || '', actionType: normCell(rowValue(r, ['Acción', 'Accion'])) || 'Revisar', costParts: numberCell(rowValue(r, ['Repuestos'])), costLabor: numberCell(rowValue(r, ['ManoDeObra', 'Mano de obra'])), notes: normCell(rowValue(r, ['Notas'])) });
+                count++;
+            });
+
+            partRows.forEach(r => {
+                const catName = partCategoryName(r);
+                const defaultItem = DEFAULTS.find(i => i.name.toLowerCase() === catName.toLowerCase() || i.id.toLowerCase() === catName.toLowerCase());
+                let item = defaultItem || (D.partCategories || []).find(c => c.name.toLowerCase() === catName.toLowerCase());
+                if (defaultItem) D.deletedPartCategories = (D.deletedPartCategories || []).filter(id => id !== defaultItem.id);
+                if (defaultItem && defaultItem.name.toLowerCase() !== catName.toLowerCase()) {
+                    const existingCategory = (D.partCategories || []).find(c => c.id === defaultItem.id);
+                    if (existingCategory) existingCategory.name = catName;
+                    else D.partCategories.push({ id: defaultItem.id, name: catName });
+                }
+                if (!item) { item = { id: 'cat_' + uid(), name: catName }; D.partCategories.push(item); }
+                D.parts.push({ id: uid(), itemId: item.id, nombre: normCell(rowValue(r, ['Nombre', 'Repuesto'])), codigo: normCell(rowValue(r, ['Codigo', 'Código'])), marca: normCell(rowValue(r, ['Marca'])), precio: normCell(rowValue(r, ['Precio'])), link: normCell(rowValue(r, ['Link', 'Enlace'])), customFields: [], notas: normCell(rowValue(r, ['Notas'])) });
+                count++;
+            });
+
+            logRows.forEach(r => {
+                const text = normCell(rowValue(r, ['Descripción', 'Descripcion', 'Texto']));
+                D.log.push({ id: uid(), date: excelDate(rowValue(r, ['Fecha'])), text, cat: normCell(rowValue(r, ['Categoría', 'Categoria'])) || 'Mantenimiento', km: parseInt(rowValue(r, ['Km', 'Kilómetros', 'Kilometros'])) || 0 });
+                count++;
+            });
+
+            fuelRows.forEach(r => {
+                D.fuelLog.push({ id: uid(), date: excelDate(rowValue(r, ['Fecha'])), liters: numberCell(rowValue(r, ['Litros'])), price: numberCell(rowValue(r, ['PrecioLitro', 'Precio litro', 'Precio/litro'])), km: parseInt(rowValue(r, ['Km', 'Kilómetros', 'Kilometros'])) || 0, fullTank: boolCell(rowValue(r, ['TanqueLleno', 'Tanque lleno'])) });
+                count++;
+            });
+
+            Object.values(D.records || {}).forEach(recordSet => {
+                const seen = new Map();
+                (recordSet.history || []).forEach(entry => {
+                    const key = importKey([entry.date, entry.km]);
+                    const previous = seen.get(key);
+                    seen.set(key, previous ? { ...previous, ...entry, id: previous.id } : entry);
+                });
+                recordSet.history = Array.from(seen.values());
+            });
+            const mergeRows = (rows, keyFn) => {
+                const seen = new Map();
+                rows.forEach(entry => {
+                    const key = keyFn(entry);
+                    const previous = seen.get(key);
+                    if (previous) {
+                        const merged = { ...previous, ...entry, id: previous.id };
+                        if (Array.isArray(previous.customFields) && previous.customFields.length && (!Array.isArray(entry.customFields) || !entry.customFields.length)) merged.customFields = previous.customFields;
+                        seen.set(key, merged);
+                    } else {
+                        seen.set(key, entry);
+                    }
+                });
+                return Array.from(seen.values());
+            };
+            D.parts = mergeRows(D.parts || [], p => importKey([p.itemId, p.codigo || p.nombre]));
+            D.log = mergeRows(D.log || [], l => importKey([l.date, l.text]));
+            D.fuelLog = mergeRows(D.fuelLog || [], f => importKey([f.date, f.km]));
+            D.fuelLog.sort((a, b) => a.km - b.km);
+            save(); resetViewStateForVehicle(); renderAll(); toast(count ? `${count} filas sincronizadas` : 'Excel sin datos para importar');
+        }
         // Import JSON
         $('#import-input').addEventListener('change', e => {
             const file = e.target.files[0]; if (!file) return;
@@ -2690,6 +2912,19 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             reader.readAsText(file); e.target.value = '';
         });
 
+        // Import Excel
+        $('#excel-input').addEventListener('change', e => {
+            const file = e.target.files[0]; if (!file) return;
+            if (!window.XLSX) { toast('No se pudo cargar el lector de Excel'); e.target.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
+                    importWorkbook(wb);
+                } catch (err) { toast('Error al importar Excel'); }
+            };
+            reader.readAsArrayBuffer(file); e.target.value = '';
+        });
         // INIT
         load();
         setTimeout(() => {
