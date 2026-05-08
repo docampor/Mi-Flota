@@ -1,0 +1,18 @@
+{
+  "name": "Moto Pro - Seguimiento de Mantenimiento",
+  "short_name": "Moto Pro",
+  "description": "Seguimiento completo del mantenimiento de tu moto",
+  "start_url": "./mi_garagev3.html",
+  "display": "standalone",
+  "background_color": "#F5F4F1",
+  "theme_color": "#18170F",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
