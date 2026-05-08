@@ -1589,8 +1589,8 @@
             { id: 'aceite', name: 'Cambio de aceite', interval: 3000 },
             { id: 'cadena', name: 'Cadena', interval: 15000 },
             { id: 'filtro', name: 'Filtro de aire', interval: 8000 },
-            { id: 'bujia', name: 'BujÃ­a', interval: 12000 },
-            { id: 'frenos', name: 'LÃ­quido de frenos', interval: 20000 }
+            { id: 'bujia', name: 'Bujía', interval: 12000 },
+            { id: 'frenos', name: 'Líquido de frenos', interval: 20000 }
         ];
         const PARTS_DEFAULTS = {
             aceite: [{ label: 'Aceite', value: '' }, { label: 'Filtro', value: '' }],
@@ -1599,11 +1599,11 @@
             bujia: [{ label: 'Bujia', value: '' }],
             frenos: [{ label: 'Liquido de frenos', value: '' }, { label: 'Pastillas', value: '' }]
         };
-        const CATS = ['Mantenimiento', 'Viaje', 'Incidente', 'ModificaciÃ³n', 'Otro'];
+        const CATS = ['Mantenimiento', 'Viaje', 'Incidente', 'Modificación', 'Otro'];
         const ACTIONS = ['Revisar', 'Limpiar', 'Ajustar', 'Lubricar', 'Reemplazar'];
         const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
         const MESES_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        const BANNER_DEF = 'PresiÃ³n delantera: 28 psi\nPresiÃ³n trasera: 32 psi\nAceite: 10W-40\nCadena: limpiar cada 500 km\nFiltro: revisar cada 8000 km';
+        const BANNER_DEF = 'Presión delantera: 28 psi\nPresión trasera: 32 psi\nAceite: 10W-40\nCadena: limpiar cada 500 km\nFiltro: revisar cada 8000 km';
 
         let G, D, activeTab = 'resumen', expandedCards = {}, expandedParts = {}, openDropdown = null, editingBanner = false, editingMaint = null, editingFuel = null, newPartOpen = false, newPartDraft = null, editingPartCategory = null;
         const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
@@ -1761,10 +1761,10 @@
             const r = getRemaining(item);
             if (r !== null) parts.push(r <= 0 ? 'Vencido hace ' + fmtKm(Math.abs(r)) + ' km' : 'Faltan ' + fmtKm(r) + ' km');
             const rd = getRemainingDays(item);
-            if (rd !== null) parts.push(rd <= 0 ? 'Vencido hace ' + Math.abs(rd) + ' dÃ­as' : 'Faltan ' + rd + ' dÃ­as');
-            return parts.length ? parts.join(' Â· ') : 'Sin registros';
+            if (rd !== null) parts.push(rd <= 0 ? 'Vencido hace ' + Math.abs(rd) + ' días' : 'Faltan ' + rd + ' días');
+            return parts.length ? parts.join(' · ') : 'Sin registros';
         }
-        function statusLabel(s) { return s === 'ok' ? 'Al dÃ­a' : s === 'warn' ? 'PrÃ³ximo' : s === 'due' ? 'Vencido' : 'Sin datos'; }
+        function statusLabel(s) { return s === 'ok' ? 'Al día' : s === 'warn' ? 'Próximo' : s === 'due' ? 'Vencido' : 'Sin datos'; }
         function fmtKm(n) { return Math.round(n).toLocaleString('es-AR'); }
         function fmtMoney(n) { return n % 1 === 0 ? '$' + Math.round(n).toLocaleString('es-AR') : '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 2 }); }
         function fmtDate(d) { const p = new Date(d + 'T12:00:00'); return p.getDate() + ' ' + MESES[p.getMonth()] + ' ' + p.getFullYear(); }
@@ -1798,7 +1798,7 @@
         };
 
         function renderNav() {
-            const tabs = [['resumen', 'Resumen', ICO.home], ['mantenimiento', 'Mantenimiento', ICO.wrench], ['combustible', 'Combustible', ICO.fuel], ['repuestos', 'Repuestos', ICO.box], ['bitacora', 'BitÃ¡cora', ICO.book], ['informe', 'Informe', ICO.doc]];
+            const tabs = [['resumen', 'Resumen', ICO.home], ['mantenimiento', 'Mantenimiento', ICO.wrench], ['combustible', 'Combustible', ICO.fuel], ['repuestos', 'Repuestos', ICO.box], ['bitacora', 'Bitácora', ICO.book], ['informe', 'Informe', ICO.doc]];
             const hasDue = allItems().some(i => getStatus(i) === 'due');
             $('#nav').innerHTML = tabs.map(([id, label, ico]) => `<div class="nav-item${activeTab === id ? ' active' : ''}${hasDue ? ' has-due' : ''}" data-tab="${id}">${ico}<span>${label}</span></div>`).join('');
         }
@@ -1813,7 +1813,7 @@
             const items = allItems(); const dueCount = items.filter(i => getStatus(i) === 'due').length;
             let lastServiceDays = null;
             items.forEach(it => { const h = getHistory(it); if (h.length) { const d = daysSince(h[h.length - 1].date); if (lastServiceDays === null || d < lastServiceDays) lastServiceDays = d; } });
-            const sub = D.km ? fmtKm(D.km) + ' km' + (lastServiceDays !== null ? ' Â· Ãºltimo servicio hace ' + lastServiceDays + ' dÃ­as' : ' Â· sin servicios registrados') : 'ConfigurÃ¡ los kilÃ³metros';
+            const sub = D.km ? fmtKm(D.km) + ' km' + (lastServiceDays !== null ? ' · último servicio hace ' + lastServiceDays + ' días' : ' · sin servicios registrados') : 'Configurá los kilómetros';
             const photoHtml = D.photo ? `<img src="${D.photo}" alt="Moto">` : (ICO.moto);
             $('#hdr').innerHTML = `
 <div class="photo" id="photo-circle" title="Tocar para cambiar foto">${photoHtml}</div>
@@ -1821,7 +1821,7 @@
 <div class="moto-name" contenteditable="true" spellcheck="false" id="moto-name">${D.name || 'Mi Moto'}</div>
 <div class="subtitle"><span class="mono">${sub}</span></div>
 </div>
-<div class="status-chip ${dueCount ? 'due' : 'ok'}">${dueCount ? dueCount + ' vencido' + (dueCount > 1 ? 's' : '') : 'Todo al dÃ­a'}</div>`;
+<div class="status-chip ${dueCount ? 'due' : 'ok'}">${dueCount ? dueCount + ' vencido' + (dueCount > 1 ? 's' : '') : 'Todo al día'}</div>`;
         }
 
         function renderGarageSelector() {
@@ -1851,13 +1851,13 @@
                 return acc + getHistory(item).filter(e => new Date(e.date + 'T12:00:00').getFullYear() === thisYear).reduce((s, e) => s + (e.costParts || 0) + (e.costLabor || 0), 0);
             }, 0);
             let html = `<div class="hero"><div class="label">Kilometraje actual</div><div class="km-display mono" id="km-display">${D.km ? fmtKm(D.km) : '0'}</div><div class="ghost-btn" id="km-update-btn">+ Actualizar km</div></div>`;
-            html += `<div class="chips-row"><div class="chip ok"><span class="num">${counts.ok}</span><span class="chip-label">Al dÃ­a</span></div><div class="chip warn"><span class="num">${counts.warn}</span><span class="chip-label">PrÃ³ximos</span></div><div class="chip due"><span class="num">${counts.due}</span><span class="chip-label">Vencidos</span></div></div>`;
+            html += `<div class="chips-row"><div class="chip ok"><span class="num">${counts.ok}</span><span class="chip-label">Al día</span></div><div class="chip warn"><span class="num">${counts.warn}</span><span class="chip-label">Próximos</span></div><div class="chip due"><span class="num">${counts.due}</span><span class="chip-label">Vencidos</span></div></div>`;
             // Costo anual card
             if (costoAnual > 0) {
-                html += `<div class="stats-card" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:16px"><div class="stat-item"><div class="stat-value mono">${fmtMoney(costoAnual)}</div><div class="stat-label">Gasto en ${thisYear}</div></div><div class="stat-item"><div class="stat-value mono">${items.reduce((n, i) => n + getHistory(i).filter(e => new Date(e.date + 'T12:00:00').getFullYear() === thisYear).length, 0)}</div><div class="stat-label">Servicios este aÃ±o</div></div><div class="stat-item"><div class="stat-value mono">${counts.due + counts.warn}</div><div class="stat-label">Requieren atenciÃ³n</div></div></div>`;
+                html += `<div class="stats-card" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:16px"><div class="stat-item"><div class="stat-value mono">${fmtMoney(costoAnual)}</div><div class="stat-label">Gasto en ${thisYear}</div></div><div class="stat-item"><div class="stat-value mono">${items.reduce((n, i) => n + getHistory(i).filter(e => new Date(e.date + 'T12:00:00').getFullYear() === thisYear).length, 0)}</div><div class="stat-label">Servicios este año</div></div><div class="stat-item"><div class="stat-value mono">${counts.due + counts.warn}</div><div class="stat-label">Requieren atención</div></div></div>`;
             }
             if (priority.length) {
-                html += '<div class="section-title">AtenciÃ³n requerida</div>';
+                html += '<div class="section-title">Atención requerida</div>';
                 priority.forEach(item => {
                     const s = getStatus(item); const r = getRemaining(item);
                     html += `<div class="priority-item" data-goto="${item.id}"><span class="pi-name">${item.name}</span><span class="pi-remaining">${formatRemaining(item)}</span><span class="badge ${s}">${statusLabel(s)}</span></div>`;
@@ -1866,7 +1866,7 @@
             // Timeline
             const upcoming = items.map(i => ({ ...i, rem: getRemaining(i), status: getStatus(i) })).filter(x => x.rem !== null && x.rem > 0).sort((a, b) => a.rem - b.rem).slice(0, 8);
             if (upcoming.length) {
-                html += '<div class="section-title" style="margin-top:16px">PrÃ³ximos vencimientos</div><div class="timeline">';
+                html += '<div class="section-title" style="margin-top:16px">Próximos vencimientos</div><div class="timeline">';
                 upcoming.forEach(u => { html += `<div class="tl-item"><div class="tl-dot" style="background:var(--${u.status === 'warn' ? 'warn' : 'ok'})"></div><div class="tl-name">${u.name}</div><div class="tl-km">${fmtKm(u.rem)} km</div></div>`; });
                 html += '</div>';
             }
@@ -1874,18 +1874,18 @@
             if (D.fuelLog.length) {
                 const avg = calcAvgConsumption(); const lastF = D.fuelLog[D.fuelLog.length - 1];
                 const totalSpent = D.fuelLog.reduce((s, f) => s + (f.liters * f.price), 0);
-                html += `<div class="section-title" style="margin-top:16px">Combustible</div><div class="stats-card"><div class="stat-item"><div class="stat-value mono">${avg !== null ? avg.toFixed(1) : 'â€”'}</div><div class="stat-label">L/100km promedio</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(lastF.price)}</div><div class="stat-label">Ãšltimo precio/L</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(totalSpent)}</div><div class="stat-label">Total gastado</div></div><div class="stat-item"><div class="stat-value mono">${fmtKm(D.km - lastF.km)}</div><div class="stat-label">km desde Ãºltima carga</div></div></div>`;
+                html += `<div class="section-title" style="margin-top:16px">Combustible</div><div class="stats-card"><div class="stat-item"><div class="stat-value mono">${avg !== null ? avg.toFixed(1) : '—'}</div><div class="stat-label">L/100km promedio</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(lastF.price)}</div><div class="stat-label">Último precio/L</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(totalSpent)}</div><div class="stat-label">Total gastado</div></div><div class="stat-item"><div class="stat-value mono">${fmtKm(D.km - lastF.km)}</div><div class="stat-label">km desde última carga</div></div></div>`;
             }
-            // Notas rÃ¡pidas
+            // Notas rápidas
             const notasLines = (D.banner || '').split('\n').filter(l => l.trim()).slice(0, 5);
             if (notasLines.length) {
-                html += '<div class="section-title" style="margin-top:16px">Notas rÃ¡pidas</div>';
+                html += '<div class="section-title" style="margin-top:16px">Notas rápidas</div>';
                 html += `<div class="card" style="cursor:pointer" id="notas-card"><div class="card-body-inner" style="padding:14px 16px">`;
                 notasLines.forEach(l => { html += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:var(--text-2)"><span style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;display:inline-block"></span>${l}</div>`; });
-                html += `<div style="font-size:11px;color:var(--muted);margin-top:8px;font-weight:600">TocÃ¡ para editar â†’</div></div></div>`;
+                html += `<div style="font-size:11px;color:var(--muted);margin-top:8px;font-weight:600">Tocá para editar →</div></div></div>`;
             }
             if (!priority.length && !D.fuelLog.length && !costoAnual) {
-                html += `<div class="empty-state">${ICO.empty}<p>Â¡Todo en orden! Tu moto estÃ¡ al dÃ­a con el mantenimiento.</p></div>`;
+                html += `<div class="empty-state">${ICO.empty}<p>¡Todo en orden! Tu moto está al día con el mantenimiento.</p></div>`;
             }
             el.innerHTML = html;
         }
@@ -1930,7 +1930,7 @@
 <div class="card-header" data-toggle="${item.id}">
 <div style="flex:1;min-width:0">
 <span class="name">${item.name}</span>
-${last ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:500">${last.actionType || 'â€”'} Â· ${fmtDateShort(last.date)}</div>` : ''}
+${last ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:500">${last.actionType || '—'} · ${fmtDateShort(last.date)}</div>` : ''}
 </div>
 <span class="badge ${s}">${statusLabel(s)}</span>
 <span class="chevron${isOpen ? ' open' : ''}">${ICO.chevron}</span>
@@ -1938,7 +1938,7 @@ ${last ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weig
 <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
 <div class="card-body${isOpen ? ' open' : ''}"><div class="card-body-inner">
 <div style="margin-top:12px">
-<div class="section-title" style="margin-bottom:6px">Â¿CuÃ¡ndo se hace?</div>
+<div class="section-title" style="margin-bottom:6px">¿Cuándo se hace?</div>
 <div class="seg-control" style="margin-bottom:10px" data-interval-type="${item.id}">
 <div class="seg-btn${cfg.intervalType === 'km' ? ' active' : ''}" data-val="km">Por km</div>
 <div class="seg-btn${cfg.intervalType === 'dias' ? ' active' : ''}" data-val="dias">Por tiempo</div>
@@ -1946,16 +1946,16 @@ ${last ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weig
 </div>
 <div class="form-row" id="cfg-km-${item.id}" style="${cfg.intervalType === 'dias' ? 'display:none' : ''}"><div class="form-group"><label>Intervalo (km)</label><input type="number" class="form-input mono" value="${cfg.intervalKm}" data-save-cfg-km="${item.id}"></div></div>
 <div class="form-row" id="cfg-dias-${item.id}" style="${cfg.intervalType === 'km' ? 'display:none' : ''}">
-<div class="form-group"><label>Intervalo (dÃ­as)</label><input type="number" class="form-input mono" value="${cfg.intervalDays || ''}" placeholder="ej. 180" data-save-cfg-dias="${item.id}"></div>
-<div class="form-group"><label>PrÃ³xima fecha ðŸ“…</label><input type="date" class="form-input" value="${cfg.nextDate || ''}" data-save-cfg-nextdate="${item.id}"></div>
+<div class="form-group"><label>Intervalo (días)</label><input type="number" class="form-input mono" value="${cfg.intervalDays || ''}" placeholder="ej. 180" data-save-cfg-dias="${item.id}"></div>
+<div class="form-group"><label>Próxima fecha 📅</label><input type="date" class="form-input" value="${cfg.nextDate || ''}" data-save-cfg-nextdate="${item.id}"></div>
 </div>
 <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
 <div class="form-row">
 <div class="form-group"><label>Fecha</label><input type="date" class="form-input" value="${rec ? rec.date : today()}" data-field="date"></div>
 <div class="form-group"><label>Km actuales</label><input type="number" class="form-input mono" value="${rec ? rec.km : D.km}" data-field="km"></div>
 </div>
-${cfg.intervalType !== 'dias' ? `<div class="form-group"><label>Km prÃ³ximo servicio</label><input type="number" class="form-input mono" value="${nextKmDefault}" data-field="nextKm"></div>` : ''}
-<div class="form-group"><label>Tipo de acciÃ³n</label>
+${cfg.intervalType !== 'dias' ? `<div class="form-group"><label>Km próximo servicio</label><input type="number" class="form-input mono" value="${nextKmDefault}" data-field="nextKm"></div>` : ''}
+<div class="form-group"><label>Tipo de acción</label>
 <div class="seg-control" data-field="actionType">${ACTIONS.map(a => `<div class="seg-btn${(rec ? rec.actionType : ACTIONS[0]) === a ? ' active' : ''}" data-val="${a}">${a}</div>`).join('')}</div></div>
 <div class="form-row">
 <div class="form-group"><label>Repuestos $</label><input type="number" class="form-input mono" value="${rec ? rec.costParts : 0}" data-field="costParts"></div>
@@ -1969,13 +1969,13 @@ ${isEdit ? `<div class="form-row"><button class="btn btn-primary" data-update-re
                     [...h].reverse().forEach((entry, idx) => {
                         const realIdx = h.length - 1 - idx;
                         const cost = (entry.costParts || 0) + (entry.costLabor || 0);
-                        html += `<div class="history-item"><div class="hi-info"><div class="hi-date">${fmtDate(entry.date)} Â· <span class="mono">${fmtKm(entry.km)} km</span></div><div class="hi-detail">${entry.actionType || 'â€”'}${cost ? ' Â· ' + fmtMoney(cost) : ''}${entry.notes ? ' Â· ' + entry.notes : ''}</div></div><div style="display:flex;gap:4px"><button class="del-btn" data-edit-record="${item.id}" data-idx="${realIdx}">${ICO.edit}</button><button class="del-btn" data-del-record="${item.id}" data-idx="${realIdx}">${ICO.x}</button></div></div>`;
+                        html += `<div class="history-item"><div class="hi-info"><div class="hi-date">${fmtDate(entry.date)} · <span class="mono">${fmtKm(entry.km)} km</span></div><div class="hi-detail">${entry.actionType || '—'}${cost ? ' · ' + fmtMoney(cost) : ''}${entry.notes ? ' · ' + entry.notes : ''}</div></div><div style="display:flex;gap:4px"><button class="del-btn" data-edit-record="${item.id}" data-idx="${realIdx}">${ICO.edit}</button><button class="del-btn" data-del-record="${item.id}" data-idx="${realIdx}">${ICO.x}</button></div></div>`;
                     });
                     html += '</div>';
                 }
                 html += '</div></div></div>';
             });
-            html += `<button class="btn btn-ghost" id="add-custom-btn" style="margin-top:8px">${ICO.plus} Agregar Ã­tem personalizado</button>`;
+            html += `<button class="btn btn-ghost" id="add-custom-btn" style="margin-top:8px">${ICO.plus} Agregar ítem personalizado</button>`;
             html += '<div id="custom-form-wrap"></div>';
             el.innerHTML = html;
         }
@@ -1983,7 +1983,7 @@ ${isEdit ? `<div class="form-row"><button class="btn btn-primary" data-update-re
         function partSummary(part) {
             if (!part) return 'Sin datos cargados';
             const bits = [part.codigo, part.marca].filter(Boolean);
-            return bits.length ? bits.join(' Â· ') : 'Sin datos cargados';
+            return bits.length ? bits.join(' · ') : 'Sin datos cargados';
         }
 
         function renderPartForm(part, ownerAttr) {
@@ -1992,7 +1992,7 @@ ${isEdit ? `<div class="form-row"><button class="btn btn-primary" data-update-re
             return `<div class="part-fields">
 <div class="form-row">
 <div class="form-group"><label>Nombre / descripcion</label><input type="text" class="form-input" value="${esc(part.nombre)}" data-rp-field="nombre" ${ownerAttr}></div>
-<div class="form-group"><label>Codigo / parte NÂ°</label><input type="text" class="form-input mono" value="${esc(part.codigo)}" data-rp-field="codigo" ${ownerAttr}></div>
+<div class="form-group"><label>Codigo / parte N°</label><input type="text" class="form-input mono" value="${esc(part.codigo)}" data-rp-field="codigo" ${ownerAttr}></div>
 </div>
 <div class="form-row">
 <div class="form-group"><label>Marca</label><input type="text" class="form-input" value="${esc(part.marca)}" data-rp-field="marca" ${ownerAttr}></div>
@@ -2059,7 +2059,7 @@ ${recOpen ? `<div class="part-record-body">${renderPartForm(part, `data-rp-id="$
 <div class="form-group"><label>Precio/litro $</label><input type="number" step="0.01" class="form-input mono" id="fuel-price" placeholder="0" value="${rec ? rec.price : ''}"></div>
 <div class="form-group"><label>Km actuales</label><input type="number" class="form-input mono" id="fuel-km" value="${rec ? rec.km : D.km}"></div>
 </div>
-<div class="toggle-wrap"><div class="toggle${rec && rec.fullTank ? ' on' : ''}" id="fuel-full"></div><span style="font-size:13px">Â¿Tanque lleno?</span></div>
+<div class="toggle-wrap"><div class="toggle${rec && rec.fullTank ? ' on' : ''}" id="fuel-full"></div><span style="font-size:13px">¿Tanque lleno?</span></div>
 ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-btn">Actualizar carga</button><button class="btn btn-ghost" id="cancel-fuel-edit">Cancelar</button></div>` : `<button class="btn btn-primary" id="fuel-save-btn">Guardar carga</button>`}
 </div></div>`;
             if (D.fuelLog.length) {
@@ -2067,8 +2067,8 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 const lastMonth = D.fuelLog.filter(f => { const d = new Date(f.date + 'T12:00:00'); return (Date.now() - d.getTime()) < 30 * 86400000; });
                 const avgPrice = lastMonth.length ? lastMonth.reduce((s, f) => s + f.price, 0) / lastMonth.length : null;
                 const lastF = D.fuelLog[D.fuelLog.length - 1];
-                html += `<div class="stats-card"><div class="stat-item"><div class="stat-value mono">${avg !== null ? avg.toFixed(1) : 'â€”'}</div><div class="stat-label">L/100km promedio</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(totalSpent)}</div><div class="stat-label">Total gastado</div></div><div class="stat-item"><div class="stat-value mono">${avgPrice !== null ? fmtMoney(avgPrice) : 'â€”'}</div><div class="stat-label">Precio prom. mes</div></div><div class="stat-item"><div class="stat-value mono">${fmtKm(D.km - lastF.km)}</div><div class="stat-label">km desde Ãºltima carga</div></div></div>`;
-                // GrÃ¡fico de consumo SVG
+                html += `<div class="stats-card"><div class="stat-item"><div class="stat-value mono">${avg !== null ? avg.toFixed(1) : '—'}</div><div class="stat-label">L/100km promedio</div></div><div class="stat-item"><div class="stat-value mono">${fmtMoney(totalSpent)}</div><div class="stat-label">Total gastado</div></div><div class="stat-item"><div class="stat-value mono">${avgPrice !== null ? fmtMoney(avgPrice) : '—'}</div><div class="stat-label">Precio prom. mes</div></div><div class="stat-item"><div class="stat-value mono">${fmtKm(D.km - lastF.km)}</div><div class="stat-label">km desde última carga</div></div></div>`;
+                // Gráfico de consumo SVG
                 const chartData = calcConsumptionHistory();
                 if (chartData.length >= 2) {
                     const maxV = Math.max(...chartData.map(d => d.v)); const minV = Math.min(...chartData.map(d => d.v));
@@ -2080,10 +2080,10 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 html += '<div class="section-title">Historial de cargas</div>';
                 [...D.fuelLog].reverse().forEach(f => {
                     const total = f.liters * f.price;
-                    html += `<div class="fuel-item"><div class="fi-main"><strong>${fmtDate(f.date)}</strong> Â· <span class="mono">${f.liters.toLocaleString('es-AR', { minimumFractionDigits: 1 })} L</span> Â· <span class="mono">${fmtMoney(f.price)}/L</span> Â· Total: <span class="mono">${fmtMoney(total)}</span> Â· <span class="mono">${fmtKm(f.km)} km</span>${f.fullTank ? ' <span class="badge ok" style="font-size:9px">Lleno</span>' : ''}</div><div style="display:flex;gap:4px"><button class="del-btn" data-edit-fuel="${f.id}">${ICO.edit}</button><button class="del-btn" data-del-fuel="${f.id}">${ICO.x}</button></div></div>`;
+                    html += `<div class="fuel-item"><div class="fi-main"><strong>${fmtDate(f.date)}</strong> · <span class="mono">${f.liters.toLocaleString('es-AR', { minimumFractionDigits: 1 })} L</span> · <span class="mono">${fmtMoney(f.price)}/L</span> · Total: <span class="mono">${fmtMoney(total)}</span> · <span class="mono">${fmtKm(f.km)} km</span>${f.fullTank ? ' <span class="badge ok" style="font-size:9px">Lleno</span>' : ''}</div><div style="display:flex;gap:4px"><button class="del-btn" data-edit-fuel="${f.id}">${ICO.edit}</button><button class="del-btn" data-del-fuel="${f.id}">${ICO.x}</button></div></div>`;
                 });
             } else {
-                html += `<div class="empty-state">${ICO.empty}<p>RegistrÃ¡ tu primera carga de combustible para ver estadÃ­sticas de consumo.</p></div>`;
+                html += `<div class="empty-state">${ICO.empty}<p>Registrá tu primera carga de combustible para ver estadísticas de consumo.</p></div>`;
             }
             el.innerHTML = html;
         }
@@ -2099,7 +2099,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             let logs = [...D.log].sort((a, b) => b.date.localeCompare(a.date));
             if (bitacoraFilter) logs = logs.filter(l => l.cat === bitacoraFilter);
             if (bitacoraSearch) logs = logs.filter(l => l.text.toLowerCase().includes(bitacoraSearch.toLowerCase()));
-            if (!logs.length) { html += `<div class="empty-state">${ICO.empty}<p>Tu bitÃ¡cora estÃ¡ vacÃ­a. RegistrÃ¡ eventos importantes de tu moto.</p></div>`; el.innerHTML = html; return; }
+            if (!logs.length) { html += `<div class="empty-state">${ICO.empty}<p>Tu bitácora está vacía. Registrá eventos importantes de tu moto.</p></div>`; el.innerHTML = html; return; }
             const groups = {}; logs.forEach(l => { const d = new Date(l.date + 'T12:00:00'); const key = MESES_FULL[d.getMonth()] + ' ' + d.getFullYear(); if (!groups[key]) groups[key] = []; groups[key].push(l); });
             Object.keys(groups).forEach(month => {
                 html += `<div class="month-group"><div class="month-label">${month}</div>`;
@@ -2119,7 +2119,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
 <div class="action-btn" data-report="full">${ICO.doc}<div class="ab-label">Informe completo</div></div>
 <div class="action-btn" data-report="maint">${ICO.wrench}<div class="ab-label">Solo mantenimiento</div></div>
 <div class="action-btn" data-report="parts">${ICO.box}<div class="ab-label">Listar repuestos</div></div>
-<div class="action-btn" data-report="log">${ICO.book}<div class="ab-label">Solo bitÃ¡cora</div></div>
+<div class="action-btn" data-report="log">${ICO.book}<div class="ab-label">Solo bitácora</div></div>
 <div class="action-btn" data-report="fuel">${ICO.fuel}<div class="ab-label">Solo combustible</div></div>
 </div>
 <div class="section-title">Datos</div>
@@ -2135,13 +2135,13 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
         function generateReport(type) {
             const m = $('#modal'); let html = '';
             const title = D.name || 'Mi Flota'; const dateStr = fmtDate(today());
-            html += `<h1 style="font-size:20px;margin-bottom:4px">${title}</h1><p style="color:var(--muted);margin-bottom:16px">${fmtKm(D.km)} km Â· ${dateStr}</p>`;
+            html += `<h1 style="font-size:20px;margin-bottom:4px">${title}</h1><p style="color:var(--muted);margin-bottom:16px">${fmtKm(D.km)} km · ${dateStr}</p>`;
             if (type === 'full' || type === 'maint') {
                 html += '<h2 style="font-size:16px;margin:16px 0 8px">Mantenimiento</h2>';
                 allItems().forEach(item => {
                     const s = getStatus(item); const h = getHistory(item);
-                    html += `<div style="margin-bottom:12px"><strong>${item.name}</strong> <span class="badge ${s}" style="font-size:10px">${statusLabel(s)}</span> â€” ${formatRemaining(item)}`;
-                    if (h.length) { html += '<ul style="margin:4px 0 0 16px;font-size:13px">'; h.forEach(e => { const c = (e.costParts || 0) + (e.costLabor || 0); html += `<li>${fmtDate(e.date)} Â· ${fmtKm(e.km)} km Â· ${e.actionType || 'â€”'}${c ? ' Â· ' + fmtMoney(c) : ''}</li>`; }); html += '</ul>'; }
+                    html += `<div style="margin-bottom:12px"><strong>${item.name}</strong> <span class="badge ${s}" style="font-size:10px">${statusLabel(s)}</span> — ${formatRemaining(item)}`;
+                    if (h.length) { html += '<ul style="margin:4px 0 0 16px;font-size:13px">'; h.forEach(e => { const c = (e.costParts || 0) + (e.costLabor || 0); html += `<li>${fmtDate(e.date)} · ${fmtKm(e.km)} km · ${e.actionType || '—'}${c ? ' · ' + fmtMoney(c) : ''}</li>`; }); html += '</ul>'; }
                     html += '</div>';
                 });
             }
@@ -2158,7 +2158,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                             html += `<div style="margin-bottom:10px;font-size:13px"><strong>${esc(item.name)}</strong>`;
                             parts.forEach(part => {
                             html += `<div style="margin-top:6px">${part.nombre ? esc(part.nombre) : 'Repuesto sin nombre'}`;
-                            html += `<div style="color:var(--muted)">${[part.codigo, part.marca, part.precio ? fmtMoney(parseFloat(part.precio) || 0) : ''].filter(Boolean).map(esc).join(' Â· ')}</div>`;
+                            html += `<div style="color:var(--muted)">${[part.codigo, part.marca, part.precio ? fmtMoney(parseFloat(part.precio) || 0) : ''].filter(Boolean).map(esc).join(' · ')}</div>`;
                             if (part.link) html += `<div style="margin-top:4px"><a href="${esc(part.link)}" target="_blank" rel="noopener">Link de compra</a></div>`;
                                 if (part.customFields.length) html += `<ul style="margin:4px 0 0 16px">${part.customFields.filter(f => f.label || f.value).map(f => `<li>${esc(f.label || 'Campo')}: ${esc(f.value)}</li>`).join('')}</ul>`;
                                 if (part.notas) html += `<div style="margin-top:4px">${esc(part.notas)}</div>`;
@@ -2171,7 +2171,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                         html += '<h3 style="font-size:14px;margin:10px 0 6px">Adicionales</h3>';
                         manualParts.forEach(part => {
                             html += `<div style="margin-bottom:10px;font-size:13px"><strong>${esc(part.nombre || 'Repuesto sin nombre')}</strong>`;
-                            html += `<div style="color:var(--muted)">${[part.codigo, part.marca, part.precio ? fmtMoney(parseFloat(part.precio) || 0) : ''].filter(Boolean).map(esc).join(' Â· ')}</div>`;
+                            html += `<div style="color:var(--muted)">${[part.codigo, part.marca, part.precio ? fmtMoney(parseFloat(part.precio) || 0) : ''].filter(Boolean).map(esc).join(' · ')}</div>`;
                             if (part.link) html += `<div style="margin-top:4px"><a href="${esc(part.link)}" target="_blank" rel="noopener">Link de compra</a></div>`;
                             if (part.customFields.length) html += `<ul style="margin:4px 0 0 16px">${part.customFields.filter(f => f.label || f.value).map(f => `<li>${esc(f.label || 'Campo')}: ${esc(f.value)}</li>`).join('')}</ul>`;
                             if (part.notas) html += `<div style="margin-top:4px">${esc(part.notas)}</div>`;
@@ -2183,15 +2183,15 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (type === 'full' || type === 'fuel') {
                 html += '<h2 style="font-size:16px;margin:16px 0 8px">Combustible</h2>';
                 if (D.fuelLog.length) {
-                    const avg = calcAvgConsumption(); html += `<p>Consumo promedio: ${avg !== null ? avg.toFixed(1) : 'â€”'} L/100km</p>`;
+                    const avg = calcAvgConsumption(); html += `<p>Consumo promedio: ${avg !== null ? avg.toFixed(1) : '—'} L/100km</p>`;
                     html += '<table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:8px"><tr><th style="text-align:left;padding:4px;border-bottom:1px solid var(--border)">Fecha</th><th>Litros</th><th>$/L</th><th>Km</th></tr>';
                     D.fuelLog.forEach(f => { html += `<tr><td style="padding:4px;border-bottom:1px solid var(--border)">${fmtDate(f.date)}</td><td class="mono" style="text-align:right">${f.liters}</td><td class="mono" style="text-align:right">${fmtMoney(f.price)}</td><td class="mono" style="text-align:right">${fmtKm(f.km)}</td></tr>`; });
                     html += '</table>';
                 } else html += '<p style="color:var(--muted)">Sin registros</p>';
             }
             if (type === 'full' || type === 'log') {
-                html += '<h2 style="font-size:16px;margin:16px 0 8px">BitÃ¡cora</h2>';
-                if (D.log.length) { [...D.log].sort((a, b) => b.date.localeCompare(a.date)).forEach(l => { html += `<div style="margin-bottom:8px;font-size:13px"><strong>${fmtDate(l.date)}</strong> â€” ${l.text} <em style="color:var(--muted)">${l.cat}</em></div>`; }); }
+                html += '<h2 style="font-size:16px;margin:16px 0 8px">Bitácora</h2>';
+                if (D.log.length) { [...D.log].sort((a, b) => b.date.localeCompare(a.date)).forEach(l => { html += `<div style="margin-bottom:8px;font-size:13px"><strong>${fmtDate(l.date)}</strong> — ${l.text} <em style="color:var(--muted)">${l.cat}</em></div>`; }); }
                 else html += '<p style="color:var(--muted)">Sin registros</p>';
             }
             m.innerHTML = `<div class="modal-bar"><button class="btn btn-sm btn-ghost" id="modal-print">${ICO.print} Imprimir</button><button class="btn btn-sm btn-ghost" id="modal-share">${ICO.share} Compartir</button><button class="btn btn-sm btn-ghost" id="modal-close" style="border-color:var(--border-md)">${ICO.x} Cerrar</button></div><div class="modal-content">${html}</div>`;
@@ -2284,7 +2284,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (t.id === 'part-cancel-new') { newPartOpen = false; newPartDraft = null; renderRepuestos(); return; }
             if (t.id === 'part-save-cat') {
                 const name = $('#part-cat-name')?.value.trim();
-                if (!name) { toast('CompletÃ¡ el nombre'); return; }
+                if (!name) { toast('Completá el nombre'); return; }
                 const cat = { id: 'pc_' + uid(), name };
                 D.partCategories.push(cat);
                 newPartOpen = false; expandedParts[cat.id] = true;
@@ -2301,7 +2301,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (saveCategory) {
                 const itemId = saveCategory.dataset.rpSaveCategory;
                 const name = $('#part-cat-edit-name')?.value.trim();
-                if (!name) { toast('CompletÃ¡ el nombre'); return; }
+                if (!name) { toast('Completá el nombre'); return; }
                 const customCat = (D.partCategories || []).find(c => c.id === itemId);
                 if (customCat) customCat.name = name;
                 else {
@@ -2383,7 +2383,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             // Card toggle
             const toggle = t.closest('[data-toggle]');
             if (toggle) { const id = toggle.dataset.toggle; expandedCards[id] = !expandedCards[id]; renderMantenimiento(); return; }
-            // Segmented control â€” interval type selector
+            // Segmented control — interval type selector
             const seg = t.closest('.seg-btn');
             if (seg) {
                 const parent = seg.parentElement;
@@ -2399,7 +2399,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                     renderMantenimiento(); // re-render so ALL fields (incl. nextKm) update correctly
                     return;
                 }
-                // Otherwise it's an action-type or category selector â€” just toggle active class
+                // Otherwise it's an action-type or category selector — just toggle active class
                 parent.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
                 seg.classList.add('active');
                 return;
@@ -2427,7 +2427,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 if (wrap.querySelector('.inline-confirm')) return;
                 const itemId = delRec.dataset.delRecord; const idx = parseInt(delRec.dataset.idx);
                 const confirm = document.createElement('div'); confirm.className = 'inline-confirm';
-                confirm.innerHTML = `<span class="ic-text">Â¿Eliminar registro?</span><button class="btn btn-sm btn-danger" data-confirm-del="1">SÃ­</button><button class="btn btn-sm btn-ghost" data-cancel-del="1">No</button>`;
+                confirm.innerHTML = `<span class="ic-text">¿Eliminar registro?</span><button class="btn btn-sm btn-danger" data-confirm-del="1">Sí</button><button class="btn btn-sm btn-ghost" data-cancel-del="1">No</button>`;
                 wrap.appendChild(confirm);
                 confirm.querySelector('[data-confirm-del]').onclick = () => { D.records[itemId].history.splice(idx, 1); save(); toast('Eliminado'); renderAll(); };
                 confirm.querySelector('[data-cancel-del]').onclick = () => confirm.remove();
@@ -2472,7 +2472,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 const price = parseFloat($('#fuel-price')?.value);
                 const km = parseInt($('#fuel-km')?.value);
                 const fullTank = $('#fuel-full')?.classList.contains('on') || false;
-                if (!liters || !price || !km) { toast('CompletÃ¡ todos los campos'); return; }
+                if (!liters || !price || !km) { toast('Completá todos los campos'); return; }
                 D.fuelLog.push({ id: uid(), date, liters, price, km, fullTank }); save(); toast('Carga guardada'); renderAll(); return;
             }
             // Delete fuel
@@ -2481,7 +2481,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
                 const wrap = delFuel.parentElement; if (wrap.querySelector('.inline-confirm')) return;
                 const fid = delFuel.dataset.delFuel;
                 const confirm = document.createElement('div'); confirm.className = 'inline-confirm';
-                confirm.innerHTML = `<span class="ic-text">Â¿Eliminar carga?</span><button class="btn btn-sm btn-danger" data-cfd="1">SÃ­</button><button class="btn btn-sm btn-ghost" data-ccd="1">No</button>`;
+                confirm.innerHTML = `<span class="ic-text">¿Eliminar carga?</span><button class="btn btn-sm btn-danger" data-cfd="1">Sí</button><button class="btn btn-sm btn-ghost" data-ccd="1">No</button>`;
                 wrap.appendChild(confirm);
                 confirm.querySelector('[data-cfd]').onclick = () => { D.fuelLog = D.fuelLog.filter(f => f.id !== fid); save(); toast('Eliminado'); renderAll(); };
                 confirm.querySelector('[data-ccd]').onclick = () => confirm.remove();
@@ -2502,22 +2502,22 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             // Add custom item
             if (t.id === 'add-custom-btn' || t.closest('#add-custom-btn')) {
                 const wrap = $('#custom-form-wrap');
-                wrap.innerHTML = `<div class="card" style="margin-top:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Nombre del Ã­tem</label><input type="text" class="form-input" id="custom-name"></div><div class="form-group"><label>Intervalo (km)</label><input type="number" class="form-input mono" id="custom-interval"></div><button class="btn btn-primary" id="custom-save">Guardar Ã­tem</button></div></div>`;
+                wrap.innerHTML = `<div class="card" style="margin-top:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Nombre del ítem</label><input type="text" class="form-input" id="custom-name"></div><div class="form-group"><label>Intervalo (km)</label><input type="number" class="form-input mono" id="custom-interval"></div><button class="btn btn-primary" id="custom-save">Guardar ítem</button></div></div>`;
                 return;
             }
             if (t.id === 'custom-save') {
                 const name = $('#custom-name')?.value?.trim(); const interval = parseInt($('#custom-interval')?.value);
-                if (!name || !interval) { toast('CompletÃ¡ nombre e intervalo'); return; }
-                D.custom.push({ id: uid(), name, interval }); save(); toast('Ãtem agregado'); renderAll(); return;
+                if (!name || !interval) { toast('Completá nombre e intervalo'); return; }
+                D.custom.push({ id: uid(), name, interval }); save(); toast('Ítem agregado'); renderAll(); return;
             }
             // Log new event
             if (t.id === 'log-new-btn' || t.closest('#log-new-btn')) {
                 const wrap = $('#log-form-wrap');
-                wrap.innerHTML = `<div class="card" style="margin-bottom:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Fecha</label><input type="date" class="form-input" value="${today()}" id="log-date"></div><div class="form-group"><label>DescripciÃ³n</label><input type="text" class="form-input" id="log-text" placeholder="Â¿QuÃ© pasÃ³?"></div><div class="form-group"><label>CategorÃ­a</label><div class="seg-control" id="log-cat">${CATS.map((c, i) => `<div class="seg-btn${i === 0 ? ' active' : ''}" data-val="${c}">${c}</div>`).join('')}</div></div><div class="form-group"><label>Km</label><input type="number" class="form-input mono" id="log-km" value="${D.km}"></div><button class="btn btn-primary" id="log-save">Guardar evento</button></div></div>`;
+                wrap.innerHTML = `<div class="card" style="margin-bottom:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Fecha</label><input type="date" class="form-input" value="${today()}" id="log-date"></div><div class="form-group"><label>Descripción</label><input type="text" class="form-input" id="log-text" placeholder="¿Qué pasó?"></div><div class="form-group"><label>Categoría</label><div class="seg-control" id="log-cat">${CATS.map((c, i) => `<div class="seg-btn${i === 0 ? ' active' : ''}" data-val="${c}">${c}</div>`).join('')}</div></div><div class="form-group"><label>Km</label><input type="number" class="form-input mono" id="log-km" value="${D.km}"></div><button class="btn btn-primary" id="log-save">Guardar evento</button></div></div>`;
                 return;
             }
             if (t.id === 'log-save') {
-                const text = $('#log-text')?.value?.trim(); if (!text) { toast('EscribÃ­ una descripciÃ³n'); return; }
+                const text = $('#log-text')?.value?.trim(); if (!text) { toast('Escribí una descripción'); return; }
                 const date = $('#log-date')?.value || today();
                 const cat = $('#log-cat .seg-btn.active')?.dataset.val || 'Otro';
                 const km = parseInt($('#log-km')?.value) || D.km;
@@ -2531,7 +2531,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (logEdit) {
                 const lid = logEdit.dataset.logEdit; const entry = D.log.find(l => l.id === lid); if (!entry) return; openDropdown = null;
                 const wrap = $('#log-form-wrap');
-                wrap.innerHTML = `<div class="card" style="margin-bottom:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Fecha</label><input type="date" class="form-input" value="${entry.date}" id="log-date"></div><div class="form-group"><label>DescripciÃ³n</label><input type="text" class="form-input" value="${entry.text}" id="log-text"></div><div class="form-group"><label>CategorÃ­a</label><div class="seg-control" id="log-cat">${CATS.map(c => `<div class="seg-btn${c === entry.cat ? ' active' : ''}" data-val="${c}">${c}</div>`).join('')}</div></div><div class="form-group"><label>Km</label><input type="number" class="form-input mono" value="${entry.km}" id="log-km"></div><button class="btn btn-primary" id="log-update" data-lid="${lid}">Actualizar</button></div></div>`;
+                wrap.innerHTML = `<div class="card" style="margin-bottom:12px"><div class="card-body-inner" style="padding:16px"><div class="form-group"><label>Fecha</label><input type="date" class="form-input" value="${entry.date}" id="log-date"></div><div class="form-group"><label>Descripción</label><input type="text" class="form-input" value="${entry.text}" id="log-text"></div><div class="form-group"><label>Categoría</label><div class="seg-control" id="log-cat">${CATS.map(c => `<div class="seg-btn${c === entry.cat ? ' active' : ''}" data-val="${c}">${c}</div>`).join('')}</div></div><div class="form-group"><label>Km</label><input type="number" class="form-input mono" value="${entry.km}" id="log-km"></div><button class="btn btn-primary" id="log-update" data-lid="${lid}">Actualizar</button></div></div>`;
                 renderBitacora(); return;
             }
             if (t.id === 'log-update') {
@@ -2560,7 +2560,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             if (t.id === 'import-json' || t.closest('#import-json')) { $('#import-input').click(); return; }
             // Export CSV
             if (t.id === 'export-csv' || t.closest('#export-csv')) {
-                let csv = 'Ãtem,Fecha,Km,PrÃ³ximo Km,AcciÃ³n,Repuestos,Mano de obra,Total,Notas\n';
+                let csv = 'Ítem,Fecha,Km,Próximo Km,Acción,Repuestos,Mano de obra,Total,Notas\n';
                 allItems().forEach(item => {
                     getHistory(item).forEach(e => {
                         csv += `"${item.name}","${e.date}",${e.km},${e.nextKm || ''},"${e.actionType || ''}",${e.costParts || 0},${e.costLabor || 0},${(e.costParts || 0) + (e.costLabor || 0)},"${(e.notes || '').replace(/"/g, '""')}"\n`;
@@ -2571,7 +2571,7 @@ ${rec ? `<div class="form-row"><button class="btn btn-primary" id="fuel-update-b
             // Delete all
             if (t.id === 'delete-all' || t.closest('#delete-all')) {
                 const wrap = $('#delete-confirm-wrap');
-                wrap.innerHTML = `<div class="inline-confirm" style="margin-top:12px"><span class="ic-text">Â¿Borrar los datos de este vehiculo? Los otros vehiculos no se tocan.</span><button class="btn btn-sm btn-danger" id="confirm-delete-all">SÃ­, borrar</button><button class="btn btn-sm btn-ghost" id="cancel-delete-all">Cancelar</button></div>`;
+                wrap.innerHTML = `<div class="inline-confirm" style="margin-top:12px"><span class="ic-text">¿Borrar los datos de este vehiculo? Los otros vehiculos no se tocan.</span><button class="btn btn-sm btn-danger" id="confirm-delete-all">Sí, borrar</button><button class="btn btn-sm btn-ghost" id="cancel-delete-all">Cancelar</button></div>`;
                 return;
             }
             if (t.id === 'confirm-delete-all') {

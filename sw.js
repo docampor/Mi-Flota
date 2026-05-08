@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-flota-v1';
+const CACHE_NAME = 'mi-flota-v2';
 const ASSETS = [
   './',
   './index.html',
