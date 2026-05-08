@@ -1,0 +1,19 @@
+{
+    "name":  "Mi Flota - Seguimiento de Mantenimiento",
+    "short_name":  "Mi Flota",
+    "description":  "Seguimiento completo del mantenimiento de tu moto",
+    "start_url":  "./index.html",
+    "scope":  "./",
+    "display":  "standalone",
+    "background_color":  "#F5F4F1",
+    "theme_color":  "#18170F",
+    "orientation":  "portrait",
+    "icons":  [
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/png",
+                      "sizes":  "192x192",
+                      "src":  "icon-192.png"
+                  }
+              ]
+}
